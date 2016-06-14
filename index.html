@@ -1,0 +1,156 @@
+  <!DOCTYPE html>
+<html>
+
+<head>
+  <title>Move to Click Position</title>
+  
+  <style type="text/css">
+    .dot{
+      fill:red;
+      stroke:#000000;
+    }
+
+  </style>
+</head>
+
+<body>
+  <script src="d3.min.js"></script>
+  <script>
+
+    // Arrat to store the click coordinates
+    var data = [];
+
+    // Counter to keep track of how many clicks there's been
+    var counter = 0;
+    var nodes;
+    function click(){
+      // Ignore the click event if it was suppressed
+      if (d3.event.defaultPrevented) return;
+
+      // Constrains the user to chosing three points
+      if (counter < 3){
+        // Extract the click location\    
+        var point = d3.mouse(this)
+        , p = {x: point[0], y: point[1] };
+
+        var obj = [point[0], point[1]];
+        //var obj = { 'id': counter, 'co': [point[0], point[1]]} ;
+
+        data.push(obj);
+
+        nodes = svg.selectAll("circle")
+                  .data(data)
+                  .enter() 
+                  .append("circle")
+                  .style("cursor", "pointer")
+                  .call(drag)
+                  .attr("r", 5)
+                  .attr("cx", function(d) { return d[0]} )
+                  .attr("cy", function(d) { return d[1]} )
+                  .style("fill", "red");
+      }
+
+      counter = counter + 1;
+
+      if(counter >= 3){
+
+        draw();
+
+      }
+
+    }
+
+    function draw(){
+
+      // Call function to calculate the fourt point
+      pointFour(); 
+
+      svg.append("path")
+      .attr("d", "M" + data[0][0] + "," + data[0][1] + " L" + data[1][0] +"," + data[1][1] + " " + data[2][0] + "," + data[2][1] + " " + data[3][0] + "," + data[3][1] + "Z")
+      .style("fill", "none")
+      .style("stroke-width", "3")
+      .style("stroke","blue");
+
+      var polygon = d3.geom.polygon(data);
+
+      var area = Math.abs(polygon.area());
+
+      var center = polygon.centroid();
+
+      // Calculate radius from area
+      var radius = Math.sqrt(area/Math.PI);
+
+      // d="
+      // M cx cy
+      // a r,r 0 1,0 (r * 2),0
+      // a r,r 0 1,0 -(r * 2),0
+      // "
+      svg.append("path")
+      .attr("d", "M" + center[0] + "," + center[1] + "a" + radius + "," + radius + " 0 1,0 "+ radius*2 +",0a" + radius +"," + radius +" 0 1,0 -"+ radius*2 +",0")
+      .attr("transform", "translate(-" + radius + ")")
+      .style("fill", "none")
+      .style("stroke-width", "3")
+      .style("stroke","yellow");
+
+    }
+
+    function pointFour(){
+
+      var x4 = data[2][0] - data[1][0] + data[0][0];
+      var y4 = data[2][1] - data[1][1] + data[0][1];
+
+      var obj2 = [x4, y4];
+      data.push(obj2);
+    }
+
+
+    // Create the SVG
+    var svg = d3.select("body").append("svg")
+    .attr("width", 700)
+    .attr("height", 400)
+    .on("click", click)
+
+    // Add a background
+    svg.append("rect")
+    .attr("width", 700)
+    .attr("height", 400)
+    .style("stroke", "#999999")
+    .style("fill", "#F6F6F6");
+
+    // Define drag beavior
+    var drag = d3.behavior.drag()
+    .on("drag", dragmove)
+
+    var x, y;
+    function dragmove(d) {
+      x = d3.event.x;
+      y = d3.event.y;
+      d3.select(this).attr("cx", x).attr("cy",y);
+
+      // Call a function that creates an sets a new dataset
+      // Should really only be called when .on("dragend", newData(x,y))
+      //newData(x, y);
+
+      
+    }
+
+    function newData(x, y){
+
+      // Some new dataset based on the new coordinates of the point dragged
+      // var new_data = [[ data[0][0], data[0][1]],
+      //                 [ x, y ], // Need a check which point was dragged, now it assumed that it's the second point
+      //                 [ data[2][0], data[2][1]],
+      //                 [ data[3][0], data[3][1]]
+      // ];
+
+      // Add new dataset to the nodes
+      //nodes.data(new_data);
+
+      // Draw again with the new dataset
+      //draw();
+
+    }
+  </script>
+
+</body>
+</html>
